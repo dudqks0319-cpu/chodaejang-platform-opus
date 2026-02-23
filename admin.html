@@ -34,6 +34,10 @@
             <p>예상 참석 인원</p>
             <strong id="statGuests">0</strong>
           </article>
+          <article class="stat-card">
+            <p>식사 예정 인원</p>
+            <strong id="statMealGuests">0</strong>
+          </article>
         </div>
       </section>
 
@@ -41,7 +45,7 @@
         <div class="toolbar">
           <label>
             검색
-            <input id="searchInput" type="text" placeholder="이름/연락처/메모" />
+            <input id="searchInput" type="text" placeholder="이름/연락처/구분/식사/메모" />
           </label>
 
           <label>
@@ -50,6 +54,15 @@
               <option value="all">전체</option>
               <option value="참석">참석</option>
               <option value="불참">불참</option>
+            </select>
+          </label>
+
+          <label>
+            식사 필터
+            <select id="mealFilter">
+              <option value="all">전체</option>
+              <option value="식사 예정">식사 예정</option>
+              <option value="식사 안 함">식사 안 함</option>
             </select>
           </label>
 
@@ -71,6 +84,7 @@
                 <th>제출 시각</th>
                 <th>이름</th>
                 <th>연락처</th>
+                <th>구분</th>
                 <th>참석</th>
                 <th>인원</th>
                 <th>식사</th>
@@ -80,7 +94,7 @@
             </thead>
             <tbody id="rsvpTableBody">
               <tr>
-                <td colspan="8" class="empty-row">응답 데이터가 없습니다.</td>
+                <td colspan="9" class="empty-row">응답 데이터가 없습니다.</td>
               </tr>
             </tbody>
           </table>

@@ -7,6 +7,7 @@ const inviteTitle = query.get("title") || "초대장";
 const subtitleEl = document.getElementById("adminSubtitle");
 const searchInputEl = document.getElementById("searchInput");
 const attendFilterEl = document.getElementById("attendFilter");
+const mealFilterEl = document.getElementById("mealFilter");
 const downloadCsvBtn = document.getElementById("downloadCsvBtn");
 const clearInviteBtn = document.getElementById("clearInviteBtn");
 const tableBodyEl = document.getElementById("rsvpTableBody");
@@ -15,6 +16,7 @@ const statTotalResponsesEl = document.getElementById("statTotalResponses");
 const statAttendEl = document.getElementById("statAttend");
 const statAbsentEl = document.getElementById("statAbsent");
 const statGuestsEl = document.getElementById("statGuests");
+const statMealGuestsEl = document.getElementById("statMealGuests");
 
 if (activeInviteId) {
   subtitleEl.textContent = `대상 초대장: ${inviteTitle} (${activeInviteId})`;
@@ -71,18 +73,20 @@ function byInvite(entries) {
 function byUiFilters(entries) {
   const keyword = searchInputEl.value.trim().toLowerCase();
   const attendFilter = attendFilterEl.value;
+  const mealFilter = mealFilterEl.value;
 
   return entries.filter((entry) => {
     const attendOk = attendFilter === "all" ? true : entry.attending === attendFilter;
+    const mealOk = mealFilter === "all" ? true : (entry.meal || "-") === mealFilter;
 
     if (!keyword) {
-      return attendOk;
+      return attendOk && mealOk;
     }
 
-    const searchTarget = [entry.guestName, entry.guestPhone, entry.meal, entry.note, entry.eventTitle]
+    const searchTarget = [entry.guestName, entry.guestPhone, entry.side, entry.meal, entry.note, entry.eventTitle]
       .join(" ")
       .toLowerCase();
-    return attendOk && searchTarget.includes(keyword);
+    return attendOk && mealOk && searchTarget.includes(keyword);
   });
 }
 
@@ -90,18 +94,22 @@ function renderStats(entries) {
   const attendEntries = entries.filter((entry) => entry.attending === "참석");
   const absentEntries = entries.filter((entry) => entry.attending === "불참");
   const totalGuests = attendEntries.reduce((sum, entry) => sum + Number(entry.guestCount || 0), 0);
+  const mealGuests = attendEntries
+    .filter((entry) => (entry.meal || "식사 예정") === "식사 예정")
+    .reduce((sum, entry) => sum + Number(entry.guestCount || 0), 0);
 
   statTotalResponsesEl.textContent = String(entries.length);
   statAttendEl.textContent = String(attendEntries.length);
   statAbsentEl.textContent = String(absentEntries.length);
   statGuestsEl.textContent = String(totalGuests);
+  statMealGuestsEl.textContent = String(mealGuests);
 }
 
 function renderTable(entries) {
   if (entries.length === 0) {
     tableBodyEl.innerHTML = `
       <tr>
-        <td colspan="8" class="empty-row">조건에 맞는 응답이 없습니다.</td>
+        <td colspan="9" class="empty-row">조건에 맞는 응답이 없습니다.</td>
       </tr>
     `;
     return;
@@ -114,6 +122,7 @@ function renderTable(entries) {
         <td>${escapeHtml(formatDate(entry.updatedAt || entry.createdAt))}</td>
         <td>${escapeHtml(entry.guestName || "-")}</td>
         <td>${escapeHtml(entry.guestPhone || "-")}</td>
+        <td>${escapeHtml(entry.side || "-")}</td>
         <td>${escapeHtml(entry.attending || "-")}</td>
         <td>${escapeHtml(String(entry.guestCount ?? "-"))}</td>
         <td>${escapeHtml(entry.meal || "-")}</td>
@@ -144,12 +153,13 @@ function csvEscape(value) {
 }
 
 function buildCsv(entries) {
-  const header = ["최종수정시각", "초대장ID", "이름", "연락처", "참석", "인원", "식사", "메모"];
+  const header = ["최종수정시각", "초대장ID", "이름", "연락처", "구분", "참석", "인원", "식사", "메모"];
   const rows = entries.map((entry) => [
     formatDate(entry.updatedAt || entry.createdAt),
     entry.invitationId || "",
     entry.guestName || "",
     entry.guestPhone || "",
+    entry.side || "",
     entry.attending || "",
     entry.guestCount ?? "",
     entry.meal || "",
@@ -217,6 +227,7 @@ function deleteOne(entryId) {
 
 searchInputEl.addEventListener("input", render);
 attendFilterEl.addEventListener("change", render);
+mealFilterEl.addEventListener("change", render);
 downloadCsvBtn.addEventListener("click", downloadCsv);
 clearInviteBtn.addEventListener("click", clearCurrentData);
 

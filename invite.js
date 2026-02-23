@@ -38,6 +38,91 @@ function formatDate(value) {
   }).format(date);
 }
 
+function getDdayLabel(value) {
+  if (!value) return "";
+
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return "";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dayTarget = new Date(target);
+  dayTarget.setHours(0, 0, 0, 0);
+
+  const diff = Math.round((dayTarget - today) / (1000 * 60 * 60 * 24));
+
+  if (diff === 0) return "🎉 오늘이 행사일입니다";
+  if (diff > 0) return `D-${diff}`;
+  return `D+${Math.abs(diff)}`;
+}
+
+function buildNoticeItems(data) {
+  const items = [];
+
+  if (data.parkingInfo) items.push(`주차/교통: ${data.parkingInfo}`);
+  if (data.dressCode) items.push(`드레스코드: ${data.dressCode}`);
+  if (data.bringItem) items.push(`준비물: ${data.bringItem}`);
+  if (data.extraNotice) items.push(`추가 안내: ${data.extraNotice}`);
+
+  return items;
+}
+
+function toGoogleCalendarUrl(data) {
+  if (!data.eventDate) return "";
+
+  const start = new Date(data.eventDate);
+  if (Number.isNaN(start.getTime())) return "";
+
+  const durationMin = Math.max(Number(data.durationMin) || 120, 30);
+  const end = new Date(start.getTime() + durationMin * 60 * 1000);
+
+  const toUtcCompact = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: data.eventTitle || "초대 행사",
+    dates: `${toUtcCompact(start)}/${toUtcCompact(end)}`,
+    location: [data.venueName, data.address].filter(Boolean).join(" "),
+    details: [data.message, ...buildNoticeItems(data)].filter(Boolean).join("\n"),
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function buildIcs(data) {
+  if (!data.eventDate) return "";
+
+  const start = new Date(data.eventDate);
+  if (Number.isNaN(start.getTime())) return "";
+
+  const durationMin = Math.max(Number(data.durationMin) || 120, 30);
+  const end = new Date(start.getTime() + durationMin * 60 * 1000);
+
+  const toIcsUtc = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const escape = (value) => String(value || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Opus Invitation//KO",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${Date.now()}@opus-invitation`,
+    `DTSTAMP:${toIcsUtc(new Date())}`,
+    `DTSTART:${toIcsUtc(start)}`,
+    `DTEND:${toIcsUtc(end)}`,
+    `SUMMARY:${escape(data.eventTitle || "초대 행사")}`,
+    `DESCRIPTION:${escape([data.message, ...buildNoticeItems(data)].filter(Boolean).join("\n"))}`,
+    `LOCATION:${escape([data.venueName, data.address].filter(Boolean).join(" "))}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+
+  return lines.join("\r\n");
+}
+
 function mapLinksHtml(address) {
   const encoded = encodeURIComponent(address);
 
@@ -161,6 +246,12 @@ function init() {
   document.getElementById("inviteTitle").textContent = data.eventTitle || "초대장";
   document.getElementById("inviteHost").textContent = data.hostName ? `초대자: ${data.hostName}` : "";
   document.getElementById("inviteDate").textContent = `일시: ${formatDate(data.eventDate)}`;
+
+  const ddayEl = document.getElementById("inviteDday");
+  const ddayLabel = getDdayLabel(data.eventDate);
+  ddayEl.textContent = ddayLabel;
+  ddayEl.style.display = ddayLabel ? "inline-flex" : "none";
+
   document.getElementById("inviteVenue").textContent = `장소: ${data.venueName || "장소 미정"}`;
   document.getElementById("inviteAddress").textContent = `주소: ${data.address || "주소 미입력"}`;
   document.getElementById("invitePhone").textContent = `연락처: ${data.phone || "연락처 미입력"}`;
@@ -202,6 +293,50 @@ function init() {
     mapLinksEl.textContent = "지도 링크를 표시할 수 없습니다.";
   }
 
+  const noticePanelEl = document.getElementById("inviteNoticePanel");
+  const noticeListEl = document.getElementById("inviteNoticeList");
+  const googleCalendarLinkEl = document.getElementById("googleCalendarLink");
+  const downloadIcsBtn = document.getElementById("downloadIcsBtn");
+
+  const noticeItems = buildNoticeItems(data);
+  const googleCalendarUrl = toGoogleCalendarUrl(data);
+  const icsText = buildIcs(data);
+
+  if (noticeItems.length === 0 && !googleCalendarUrl) {
+    noticePanelEl.style.display = "none";
+  } else {
+    noticePanelEl.style.display = "block";
+    noticeListEl.innerHTML = noticeItems.length ? noticeItems.map((item) => `<li>${item}</li>`).join("") : "";
+
+    if (googleCalendarUrl) {
+      googleCalendarLinkEl.href = googleCalendarUrl;
+      googleCalendarLinkEl.style.display = "inline-flex";
+      downloadIcsBtn.style.display = "inline-flex";
+    } else {
+      googleCalendarLinkEl.style.display = "none";
+      downloadIcsBtn.style.display = "none";
+    }
+  }
+
+  downloadIcsBtn.addEventListener("click", () => {
+    if (!icsText) {
+      alert("일정 정보가 없어 캘린더 파일을 생성할 수 없습니다.");
+      return;
+    }
+
+    const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(data.eventTitle || "invitation").replace(/\s+/g, "-")}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+  });
+
   const qrWrap = document.getElementById("inviteQrWrap");
   if (data.showQr) {
     renderQr(location.href);
@@ -226,6 +361,7 @@ function init() {
     }
 
     const guestPhone = String(formData.get("guestPhone") || "").trim();
+    const side = String(formData.get("side") || "친구").trim() || "친구";
     const attending = String(formData.get("attending") || "참석");
     const countValue = Number(formData.get("guestCount") || 0);
     const guestCount = attending === "참석" ? Math.max(countValue, 1) : 0;
@@ -243,6 +379,7 @@ function init() {
       guestName,
       guestPhone,
       attending,
+      side,
       guestCount,
       meal,
       note: String(formData.get("note") || "").trim(),
@@ -279,6 +416,7 @@ function init() {
 
     rsvpForm.reset();
     attendEl.value = "참석";
+    document.getElementById("rsvpSide").value = "친구";
     document.getElementById("rsvpGuestCount").value = "1";
     document.getElementById("rsvpMeal").value = "식사 예정";
     syncRsvpCountState();

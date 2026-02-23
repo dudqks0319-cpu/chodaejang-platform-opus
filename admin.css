@@ -11,7 +11,7 @@
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -36,7 +36,7 @@
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr 180px auto;
+  grid-template-columns: minmax(220px, 1fr) 150px 150px auto;
   gap: 10px;
   align-items: end;
 }
@@ -64,7 +64,7 @@
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 900px;
 }
 
 th,

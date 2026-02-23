@@ -105,6 +105,7 @@ textarea:focus {
 }
 
 .map-links,
+.notice-box,
 .share-box {
   margin-top: 14px;
   padding-top: 10px;
@@ -112,6 +113,7 @@ textarea:focus {
 }
 
 .map-links h3,
+.notice-box h3,
 .share-box h3 {
   margin: 0 0 6px;
 }
@@ -124,6 +126,17 @@ textarea:focus {
 
 .map-links a:hover {
   text-decoration: underline;
+}
+
+.notice-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.notice-list li + li {
+  margin-top: 4px;
 }
 
 .actions {
@@ -205,6 +218,17 @@ button.danger {
 .character {
   min-height: 24px;
   font-size: 1.35rem;
+}
+
+.dday-badge {
+  display: inline-flex;
+  margin: 6px 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
 }
 
 .preview-card h3 {

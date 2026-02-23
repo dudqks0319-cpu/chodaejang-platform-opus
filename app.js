@@ -56,6 +56,36 @@ function formatDate(value) {
   }).format(date);
 }
 
+function getDdayLabel(value) {
+  if (!value) return "";
+
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return "";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dayTarget = new Date(target);
+  dayTarget.setHours(0, 0, 0, 0);
+
+  const diff = Math.round((dayTarget - today) / (1000 * 60 * 60 * 24));
+
+  if (diff === 0) return "🎉 오늘이 행사일입니다";
+  if (diff > 0) return `D-${diff}`;
+  return `D+${Math.abs(diff)}`;
+}
+
+function buildNoticeItems(data) {
+  const items = [];
+
+  if (data.parkingInfo) items.push(`주차/교통: ${data.parkingInfo}`);
+  if (data.dressCode) items.push(`드레스코드: ${data.dressCode}`);
+  if (data.bringItem) items.push(`준비물: ${data.bringItem}`);
+  if (data.extraNotice) items.push(`추가 안내: ${data.extraNotice}`);
+
+  return items;
+}
+
 function getFormData() {
   return {
     eventType: document.getElementById("eventType").value,
@@ -63,12 +93,17 @@ function getFormData() {
     eventTitle: document.getElementById("eventTitle").value.trim(),
     hostName: document.getElementById("hostName").value.trim(),
     eventDate: document.getElementById("eventDate").value,
+    durationMin: Number(document.getElementById("durationMin").value || 120),
     venueName: document.getElementById("venueName").value.trim(),
     address: document.getElementById("address").value.trim(),
     phone: document.getElementById("phone").value.trim(),
     account: document.getElementById("account").value.trim(),
     character: document.getElementById("character").value,
     message: document.getElementById("message").value.trim(),
+    parkingInfo: document.getElementById("parkingInfo").value.trim(),
+    dressCode: document.getElementById("dressCode").value.trim(),
+    bringItem: document.getElementById("bringItem").value.trim(),
+    extraNotice: document.getElementById("extraNotice").value.trim(),
     showQr: document.getElementById("showQr").checked,
     showAccount: document.getElementById("showAccount").checked,
     backgroundImage: uploadedImageData,
@@ -82,12 +117,17 @@ function applyFormData(parsed) {
     "eventTitle",
     "hostName",
     "eventDate",
+    "durationMin",
     "venueName",
     "address",
     "phone",
     "account",
     "character",
     "message",
+    "parkingInfo",
+    "dressCode",
+    "bringItem",
+    "extraNotice",
   ].forEach((key) => {
     if (parsed[key] !== undefined && document.getElementById(key)) {
       document.getElementById(key).value = parsed[key];
@@ -225,6 +265,12 @@ function updatePreview() {
   document.getElementById("previewTitle").textContent = data.eventTitle || "초대장 제목을 입력해 주세요";
   document.getElementById("previewHost").textContent = data.hostName ? `초대자: ${data.hostName}` : "초대자 정보";
   document.getElementById("previewDate").textContent = `일시: ${formatDate(data.eventDate)}`;
+
+  const ddayEl = document.getElementById("previewDday");
+  const ddayLabel = getDdayLabel(data.eventDate);
+  ddayEl.textContent = ddayLabel;
+  ddayEl.style.display = ddayLabel ? "inline-flex" : "none";
+
   document.getElementById("previewVenue").textContent = `장소: ${data.venueName || "장소 미정"}`;
   document.getElementById("previewAddress").textContent = `주소: ${data.address || "주소 미입력"}`;
   document.getElementById("previewPhone").textContent = `연락처: ${data.phone || "연락처 미입력"}`;
@@ -235,6 +281,12 @@ function updatePreview() {
   accountEl.textContent = data.showAccount && data.account ? `💳 축의/회비 계좌: ${data.account}` : "";
 
   updateMapLinks(data.address);
+
+  const noticePreviewListEl = document.getElementById("noticePreviewList");
+  const noticeItems = buildNoticeItems(data);
+  noticePreviewListEl.innerHTML = noticeItems.length
+    ? noticeItems.map((item) => `<li>${item}</li>`).join("")
+    : "<li>주차/드레스코드/준비물/추가 안내를 입력하면 하객 페이지에 반영됩니다.</li>";
 
   qrWrap.style.display = data.showQr ? "block" : "none";
   if (data.showQr) {
@@ -277,11 +329,15 @@ async function copyText(text) {
 
 function composeShareMessage(url) {
   const data = getFormData();
+  const dday = getDdayLabel(data.eventDate);
+
   return [
     `[${data.eventType}] ${data.eventTitle || "초대장"}`,
+    dday ? `${dday}` : "",
     data.eventDate ? `일시: ${formatDate(data.eventDate)}` : "",
     data.venueName ? `장소: ${data.venueName}` : "",
     data.address ? `주소: ${data.address}` : "",
+    data.parkingInfo ? `주차/교통: ${data.parkingInfo}` : "",
     url,
   ]
     .filter(Boolean)

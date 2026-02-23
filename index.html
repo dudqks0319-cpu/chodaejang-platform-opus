@@ -56,6 +56,11 @@
             </label>
 
             <label>
+              행사 소요시간(분)
+              <input id="durationMin" name="durationMin" type="number" min="30" step="30" value="120" />
+            </label>
+
+            <label>
               장소명
               <input id="venueName" name="venueName" type="text" placeholder="예: 오푸스 웨딩홀 2층" />
             </label>
@@ -97,6 +102,26 @@
               <textarea id="message" name="message" rows="4" placeholder="소중한 날, 귀한 발걸음으로 함께해 주세요."></textarea>
             </label>
 
+            <label class="full">
+              주차/교통 안내
+              <textarea id="parkingInfo" name="parkingInfo" rows="2" placeholder="예: 2시간 무료주차, 만차 시 인근 공영주차장 이용"></textarea>
+            </label>
+
+            <label>
+              드레스코드(선택)
+              <input id="dressCode" name="dressCode" type="text" placeholder="예: 세미포멀 / 밝은 톤 권장" />
+            </label>
+
+            <label>
+              준비물(선택)
+              <input id="bringItem" name="bringItem" type="text" placeholder="예: 실내화, 갈아입을 옷" />
+            </label>
+
+            <label class="full">
+              추가 안내사항
+              <textarea id="extraNotice" name="extraNotice" rows="2" placeholder="예: 10분 전 입장 부탁드립니다."></textarea>
+            </label>
+
             <label class="check">
               <input id="showQr" name="showQr" type="checkbox" checked />
               QR 코드 표시
@@ -112,6 +137,13 @@
         <div class="map-links">
           <h3>지도 링크</h3>
           <div id="mapLinks">주소를 입력하면 네이버/카카오/구글 지도 링크가 생성됩니다.</div>
+        </div>
+
+        <div class="notice-box">
+          <h3>안내사항 미리보기</h3>
+          <ul id="noticePreviewList" class="notice-list">
+            <li>주차/드레스코드/준비물/추가 안내를 입력하면 하객 페이지에 반영됩니다.</li>
+          </ul>
         </div>
 
         <div class="share-box">
@@ -142,6 +174,7 @@
             <h3 id="previewTitle">초대장 제목을 입력해 주세요</h3>
             <p id="previewHost" class="host">초대자</p>
             <p id="previewDate" class="meta">일시</p>
+            <p id="previewDday" class="dday-badge"></p>
             <p id="previewVenue" class="meta">장소</p>
             <p id="previewAddress" class="meta">주소</p>
             <p id="previewPhone" class="meta">연락처</p>
