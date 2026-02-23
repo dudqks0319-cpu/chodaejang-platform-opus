@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>초대장 플랫폼(오푸스)</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>초대장 플랫폼(오푸스)</h1>
+      <p>결혼식, 돌잔치, 집들이, 칠순, 모임 초대장을 쉽게 만들고 공유하세요.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel">
+        <h2>초대장 정보 입력</h2>
+        <form id="invitationForm">
+          <div class="grid">
+            <label>
+              초대장 종류
+              <select id="eventType" name="eventType">
+                <option>결혼식</option>
+                <option>돌잔치</option>
+                <option>집들이</option>
+                <option>칠순</option>
+                <option>결혼 전 모임</option>
+                <option>기타 모임</option>
+              </select>
+            </label>
+
+            <label>
+              디자인 템플릿
+              <select id="template" name="template">
+                <option value="classic">클래식 로즈</option>
+                <option value="minimal">모던 미니멀</option>
+                <option value="warm">따뜻한 패밀리</option>
+                <option value="neon">파티 네온</option>
+                <option value="hanji">한지 감성</option>
+              </select>
+            </label>
+
+            <label>
+              초대장 제목
+              <input id="eventTitle" name="eventTitle" type="text" placeholder="예: 정영빈 · 김하늘 결혼식에 초대합니다" required />
+            </label>
+
+            <label>
+              주최/초대자 이름
+              <input id="hostName" name="hostName" type="text" placeholder="예: 정영빈" />
+            </label>
+
+            <label>
+              행사 일시
+              <input id="eventDate" name="eventDate" type="datetime-local" />
+            </label>
+
+            <label>
+              장소명
+              <input id="venueName" name="venueName" type="text" placeholder="예: 오푸스 웨딩홀 2층" />
+            </label>
+
+            <label class="full">
+              주소
+              <input id="address" name="address" type="text" placeholder="예: 서울시 강남구 테헤란로 123" />
+            </label>
+
+            <label>
+              연락처(핸드폰)
+              <input id="phone" name="phone" type="tel" placeholder="010-1234-5678" />
+            </label>
+
+            <label>
+              계좌번호
+              <input id="account" name="account" type="text" placeholder="예: 국민 123-456-789012" />
+            </label>
+
+            <label>
+              캐릭터 장식
+              <select id="character" name="character">
+                <option value="">없음</option>
+                <option value="💐">💐 플라워</option>
+                <option value="🎀">🎀 리본</option>
+                <option value="🐰">🐰 토끼</option>
+                <option value="🕊️">🕊️ 비둘기</option>
+                <option value="✨">✨ 반짝이</option>
+              </select>
+            </label>
+
+            <label>
+              배경 사진 업로드
+              <input id="backgroundImage" name="backgroundImage" type="file" accept="image/*" />
+            </label>
+
+            <label class="full">
+              초대 문구
+              <textarea id="message" name="message" rows="4" placeholder="소중한 날, 귀한 발걸음으로 함께해 주세요."></textarea>
+            </label>
+
+            <label class="check">
+              <input id="showQr" name="showQr" type="checkbox" checked />
+              QR 코드 표시
+            </label>
+
+            <label class="check">
+              <input id="showAccount" name="showAccount" type="checkbox" checked />
+              계좌정보 표시
+            </label>
+          </div>
+        </form>
+
+        <div class="map-links">
+          <h3>지도 링크</h3>
+          <div id="mapLinks">주소를 입력하면 네이버/카카오/구글 지도 링크가 생성됩니다.</div>
+        </div>
+
+        <div class="share-box">
+          <label>
+            카카오 JavaScript 키(선택)
+            <input id="kakaoAppKey" type="text" placeholder="카카오 디벨로퍼스 앱 키를 넣으면 카카오 공유 기능 사용 가능" />
+          </label>
+          <div class="actions">
+            <button type="button" id="generateLinkBtn">초대장 링크 생성</button>
+            <button type="button" id="copyTextBtn">공유 문구 복사</button>
+            <button type="button" id="kakaoShareBtn">카카오톡으로 보내기</button>
+          </div>
+          <p id="shareUrl" class="share-url"></p>
+        </div>
+      </section>
+
+      <section class="panel preview-panel">
+        <h2>미리보기</h2>
+        <article id="previewCard" class="preview-card template-classic">
+          <div class="overlay"></div>
+          <div class="preview-content">
+            <p id="previewCharacter" class="character"></p>
+            <p id="previewType" class="event-type">결혼식</p>
+            <h3 id="previewTitle">초대장 제목을 입력해 주세요</h3>
+            <p id="previewHost" class="host">초대자</p>
+            <p id="previewDate" class="meta">일시</p>
+            <p id="previewVenue" class="meta">장소</p>
+            <p id="previewAddress" class="meta">주소</p>
+            <p id="previewPhone" class="meta">연락처</p>
+            <p id="previewMessage" class="message">소중한 날, 함께해 주세요.</p>
+            <p id="previewAccount" class="account"></p>
+            <div id="qrWrap" class="qr-wrap">
+              <p>QR 코드</p>
+              <div id="qrCode"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <small>Opus MVP · 지도 링크(네이버/카카오/구글) · QR 코드 · 카카오 공유</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
