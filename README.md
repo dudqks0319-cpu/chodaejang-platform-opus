@@ -14,11 +14,17 @@ Genspark 대화 요구사항을 바탕으로 만든 초대장 플랫폼 MVP입�
   - 카카오맵
   - 구글 지도
 - QR 코드 자동 생성 (On/Off)
-- 공유 링크 생성 (`?data=` 형태로 정보 인코딩)
+- 공유 링크 생성 (`invite.html?data=` 형태로 정보 인코딩)
+  - 작성자 편집 화면(index)과 하객 수신 화면(invite) 분리
+- 작성자 초안 자동 저장/복구 (브라우저 LocalStorage)
+  - 입력 중 자동 저장, `초안 초기화` 버튼 제공
 - 카카오톡 공유 버튼
   - 카카오 JS 키 설정 시 카카오 SDK 공유
   - 키 미설정 시 공유 문구 복사로 대체
-- RSVP(참석 여부) 입력 폼
+- 하객용 초대장 페이지(`invite.html`)
+  - 지도 링크, QR, 계좌 복사, RSVP 제출
+  - RSVP 항목에 `식사 여부` 포함
+  - 동일 하객(전화번호/이름 기준) 재제출 시 기존 응답 업데이트
 - RSVP 관리자 페이지(`admin.html`)
   - 참석/불참/예상 인원 통계
   - 검색/필터
@@ -67,6 +73,9 @@ chodaejang-platform-opus/
 ├── index.html
 ├── styles.css
 ├── app.js
+├── invite.html
+├── invite.css
+├── invite.js
 ├── admin.html
 ├── admin.css
 ├── admin.js

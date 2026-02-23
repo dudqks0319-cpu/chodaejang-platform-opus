@@ -120,9 +120,10 @@
             <input id="kakaoAppKey" type="text" placeholder="카카오 디벨로퍼스 앱 키를 넣으면 카카오 공유 기능 사용 가능" />
           </label>
           <div class="actions">
-            <button type="button" id="generateLinkBtn">초대장 링크 생성</button>
+            <button type="button" id="generateLinkBtn">수신자 링크 생성</button>
             <button type="button" id="copyTextBtn">공유 문구 복사</button>
             <button type="button" id="kakaoShareBtn">카카오톡으로 보내기</button>
+            <button type="button" id="draftResetBtn" class="danger">초안 초기화</button>
           </div>
           <p id="shareUrl" class="share-url"></p>
           <p class="admin-shortcut">
@@ -132,7 +133,7 @@
       </section>
 
       <section class="panel preview-panel">
-        <h2>미리보기</h2>
+        <h2>미리보기 (작성자 화면)</h2>
         <article id="previewCard" class="preview-card template-classic">
           <div class="overlay"></div>
           <div class="preview-content">
@@ -154,45 +155,6 @@
         </article>
       </section>
     </main>
-
-    <section class="panel rsvp-panel">
-      <h2>참석 여부(RSVP)</h2>
-      <p class="inline-note">하객이 이 폼을 입력하면 브라우저에 응답이 저장되고, 관리자 페이지에서 집계/CSV 다운로드가 가능합니다.</p>
-
-      <form id="rsvpForm" class="rsvp-form">
-        <label>
-          이름
-          <input id="rsvpGuestName" name="guestName" type="text" placeholder="예: 홍길동" required />
-        </label>
-
-        <label>
-          연락처
-          <input id="rsvpGuestPhone" name="guestPhone" type="tel" placeholder="010-0000-0000" />
-        </label>
-
-        <label>
-          참석 여부
-          <select id="rsvpAttend" name="attending">
-            <option value="참석">참석</option>
-            <option value="불참">불참</option>
-          </select>
-        </label>
-
-        <label>
-          인원 수
-          <input id="rsvpGuestCount" name="guestCount" type="number" min="0" max="20" value="1" />
-        </label>
-
-        <label class="full">
-          남길 말
-          <textarea id="rsvpNote" name="note" rows="3" placeholder="축하 메시지나 전달사항"></textarea>
-        </label>
-
-        <button type="submit" id="rsvpSubmitBtn">RSVP 제출</button>
-      </form>
-
-      <p id="rsvpStatus" class="rsvp-status" aria-live="polite"></p>
-    </section>
 
     <footer class="footer">
       <small>Opus MVP · 지도 링크(네이버/카카오/구글) · QR 코드 · 카카오 공유 · RSVP · 관리자 페이지</small>

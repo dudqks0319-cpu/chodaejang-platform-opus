@@ -79,7 +79,9 @@ function byUiFilters(entries) {
       return attendOk;
     }
 
-    const searchTarget = [entry.guestName, entry.guestPhone, entry.note].join(" ").toLowerCase();
+    const searchTarget = [entry.guestName, entry.guestPhone, entry.meal, entry.note, entry.eventTitle]
+      .join(" ")
+      .toLowerCase();
     return attendOk && searchTarget.includes(keyword);
   });
 }
@@ -99,7 +101,7 @@ function renderTable(entries) {
   if (entries.length === 0) {
     tableBodyEl.innerHTML = `
       <tr>
-        <td colspan="7" class="empty-row">조건에 맞는 응답이 없습니다.</td>
+        <td colspan="8" class="empty-row">조건에 맞는 응답이 없습니다.</td>
       </tr>
     `;
     return;
@@ -109,11 +111,12 @@ function renderTable(entries) {
     .map(
       (entry) => `
       <tr>
-        <td>${escapeHtml(formatDate(entry.createdAt))}</td>
+        <td>${escapeHtml(formatDate(entry.updatedAt || entry.createdAt))}</td>
         <td>${escapeHtml(entry.guestName || "-")}</td>
         <td>${escapeHtml(entry.guestPhone || "-")}</td>
         <td>${escapeHtml(entry.attending || "-")}</td>
         <td>${escapeHtml(String(entry.guestCount ?? "-"))}</td>
+        <td>${escapeHtml(entry.meal || "-")}</td>
         <td>${escapeHtml(entry.note || "-")}</td>
         <td><button class="delete-btn" data-id="${escapeHtml(entry.id)}">삭제</button></td>
       </tr>
@@ -124,7 +127,11 @@ function renderTable(entries) {
 
 function render() {
   const entries = getEntries();
-  const inviteEntries = byInvite(entries);
+  const inviteEntries = byInvite(entries).sort((a, b) => {
+    const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+    const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
   const filtered = byUiFilters(inviteEntries);
 
   renderStats(inviteEntries);
@@ -137,14 +144,15 @@ function csvEscape(value) {
 }
 
 function buildCsv(entries) {
-  const header = ["제출시각", "초대장ID", "이름", "연락처", "참석", "인원", "메모"];
+  const header = ["최종수정시각", "초대장ID", "이름", "연락처", "참석", "인원", "식사", "메모"];
   const rows = entries.map((entry) => [
-    formatDate(entry.createdAt),
+    formatDate(entry.updatedAt || entry.createdAt),
     entry.invitationId || "",
     entry.guestName || "",
     entry.guestPhone || "",
     entry.attending || "",
     entry.guestCount ?? "",
+    entry.meal || "",
     entry.note || "",
   ]);
 

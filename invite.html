@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모바일 초대장</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="invite.css" />
+  </head>
+  <body>
+    <header class="header invite-topbar">
+      <p class="invite-kicker">초대장 플랫폼(오푸스)</p>
+      <h1 id="inviteHeaderTitle">모바일 초대장</h1>
+      <p id="inviteHeaderSub">소중한 날, 함께해 주세요.</p>
+    </header>
+
+    <main class="invite-layout">
+      <article id="inviteCard" class="preview-card template-classic">
+        <div class="overlay"></div>
+        <div class="preview-content">
+          <p id="inviteCharacter" class="character"></p>
+          <p id="inviteType" class="event-type">행사</p>
+          <h2 id="inviteTitle">초대장</h2>
+          <p id="inviteHost" class="host"></p>
+          <p id="inviteDate" class="meta"></p>
+          <p id="inviteVenue" class="meta"></p>
+          <p id="inviteAddress" class="meta"></p>
+          <p id="invitePhone" class="meta"></p>
+          <p id="inviteMessage" class="message"></p>
+          <p id="inviteAccount" class="account"></p>
+          <button id="copyAccountBtn" type="button" class="copy-account-btn">계좌 복사</button>
+          <div id="inviteQrWrap" class="qr-wrap">
+            <p>모바일 초대장 QR</p>
+            <div id="inviteQrCode"></div>
+          </div>
+        </div>
+      </article>
+
+      <section class="panel invite-panel">
+        <h3>오시는 길</h3>
+        <p id="inviteAddressLine" class="inline-note">주소 정보가 없습니다.</p>
+        <div id="inviteMapLinks" class="map-links-inline"></div>
+      </section>
+
+      <section class="panel invite-panel">
+        <h3>참석 여부(RSVP)</h3>
+        <p class="inline-note">참석 여부를 남겨주시면 주최자가 확인할 수 있어요.</p>
+
+        <form id="inviteRsvpForm" class="rsvp-form">
+          <label>
+            이름
+            <input id="rsvpGuestName" name="guestName" type="text" placeholder="예: 홍길동" required />
+          </label>
+
+          <label>
+            연락처
+            <input id="rsvpGuestPhone" name="guestPhone" type="tel" placeholder="010-0000-0000" />
+          </label>
+
+          <label>
+            참석 여부
+            <select id="rsvpAttend" name="attending">
+              <option value="참석">참석</option>
+              <option value="불참">불참</option>
+            </select>
+          </label>
+
+          <label>
+            인원 수
+            <input id="rsvpGuestCount" name="guestCount" type="number" min="0" max="20" value="1" />
+          </label>
+
+          <label>
+            식사 여부
+            <select id="rsvpMeal" name="meal">
+              <option value="식사 예정">식사 예정</option>
+              <option value="식사 안 함">식사 안 함</option>
+            </select>
+          </label>
+
+          <label class="full">
+            남길 말
+            <textarea id="rsvpNote" name="note" rows="3" placeholder="축하 메시지나 전달사항"></textarea>
+          </label>
+
+          <button type="submit" id="rsvpSubmitBtn">RSVP 제출</button>
+        </form>
+
+        <p id="rsvpStatus" class="rsvp-status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="footer invite-footer">
+      <small>본 초대장은 오푸스 플랫폼으로 제작되었습니다.</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="invite.js"></script>
+  </body>
+</html>

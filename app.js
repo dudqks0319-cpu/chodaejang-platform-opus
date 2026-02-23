@@ -1,5 +1,3 @@
-const RSVP_STORAGE_KEY = "opus_rsvp_entries_v1";
-
 const form = document.getElementById("invitationForm");
 const previewCard = document.getElementById("previewCard");
 const shareUrlEl = document.getElementById("shareUrl");
@@ -8,11 +6,6 @@ const qrCodeEl = document.getElementById("qrCode");
 const mapLinksEl = document.getElementById("mapLinks");
 const adminPageLinkEl = document.getElementById("adminPageLink");
 
-const rsvpForm = document.getElementById("rsvpForm");
-const rsvpStatusEl = document.getElementById("rsvpStatus");
-const rsvpAttendEl = document.getElementById("rsvpAttend");
-const rsvpGuestCountEl = document.getElementById("rsvpGuestCount");
-
 const TEMPLATE_CLASS = {
   classic: "template-classic",
   minimal: "template-minimal",
@@ -20,6 +13,8 @@ const TEMPLATE_CLASS = {
   neon: "template-neon",
   hanji: "template-hanji",
 };
+
+const DRAFT_STORAGE_KEY = "opus_invitation_draft_v1";
 
 let uploadedImageData = "";
 let lastShareUrl = "";
@@ -78,6 +73,77 @@ function getFormData() {
     showAccount: document.getElementById("showAccount").checked,
     backgroundImage: uploadedImageData,
   };
+}
+
+function applyFormData(parsed) {
+  [
+    "eventType",
+    "template",
+    "eventTitle",
+    "hostName",
+    "eventDate",
+    "venueName",
+    "address",
+    "phone",
+    "account",
+    "character",
+    "message",
+  ].forEach((key) => {
+    if (parsed[key] !== undefined && document.getElementById(key)) {
+      document.getElementById(key).value = parsed[key];
+    }
+  });
+
+  if (typeof parsed.showQr === "boolean") {
+    document.getElementById("showQr").checked = parsed.showQr;
+  }
+  if (typeof parsed.showAccount === "boolean") {
+    document.getElementById("showAccount").checked = parsed.showAccount;
+  }
+
+  if (parsed.backgroundImage) {
+    uploadedImageData = parsed.backgroundImage;
+  }
+}
+
+function saveDraft() {
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(getFormData()));
+  } catch {
+    // no-op
+  }
+}
+
+function restoreDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return false;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return false;
+
+    applyFormData(parsed);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    // no-op
+  }
+}
+
+function getBasePath() {
+  const { origin, pathname } = location;
+  if (pathname.endsWith("index.html")) {
+    return `${origin}${pathname.slice(0, -"index.html".length)}`;
+  }
+
+  return pathname.endsWith("/") ? `${origin}${pathname}` : `${origin}${pathname}/`;
 }
 
 function getActiveDataParam() {
@@ -172,7 +238,7 @@ function updatePreview() {
 
   qrWrap.style.display = data.showQr ? "block" : "none";
   if (data.showQr) {
-    const qrTarget = lastShareUrl || `${location.origin}${location.pathname}`;
+    const qrTarget = lastShareUrl || generateShareUrl();
     renderQr(qrTarget);
   }
 
@@ -182,48 +248,22 @@ function updatePreview() {
 function hydrateFromUrl() {
   const query = new URLSearchParams(location.search);
   const encodedData = query.get("data");
-  if (!encodedData) return;
+  if (!encodedData) return false;
 
   try {
     const parsed = JSON.parse(fromBase64Url(encodedData));
-
-    [
-      "eventType",
-      "template",
-      "eventTitle",
-      "hostName",
-      "eventDate",
-      "venueName",
-      "address",
-      "phone",
-      "account",
-      "character",
-      "message",
-    ].forEach((key) => {
-      if (parsed[key] !== undefined && document.getElementById(key)) {
-        document.getElementById(key).value = parsed[key];
-      }
-    });
-
-    if (typeof parsed.showQr === "boolean") {
-      document.getElementById("showQr").checked = parsed.showQr;
-    }
-    if (typeof parsed.showAccount === "boolean") {
-      document.getElementById("showAccount").checked = parsed.showAccount;
-    }
-
-    if (parsed.backgroundImage) {
-      uploadedImageData = parsed.backgroundImage;
-    }
+    applyFormData(parsed);
+    return true;
   } catch (error) {
     console.warn("공유 링크 데이터를 읽지 못했습니다.", error);
+    return false;
   }
 }
 
 function generateShareUrl() {
   const data = getFormData();
   const encoded = toBase64Url(JSON.stringify(data));
-  return `${location.origin}${location.pathname}?data=${encoded}`;
+  return `${getBasePath()}invite.html?data=${encoded}`;
 }
 
 async function copyText(text) {
@@ -297,84 +337,12 @@ async function shareToKakao() {
   }
 }
 
-function getRsvpEntries() {
-  try {
-    const raw = localStorage.getItem(RSVP_STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch {
-    return [];
-  }
-}
-
-function setRsvpEntries(entries) {
-  localStorage.setItem(RSVP_STORAGE_KEY, JSON.stringify(entries));
-}
-
-function syncRsvpCountState() {
-  if (!rsvpAttendEl || !rsvpGuestCountEl) return;
-
-  const attending = rsvpAttendEl.value;
-  if (attending === "불참") {
-    rsvpGuestCountEl.value = "0";
-    rsvpGuestCountEl.disabled = true;
-  } else {
-    rsvpGuestCountEl.disabled = false;
-    if (Number(rsvpGuestCountEl.value) <= 0) {
-      rsvpGuestCountEl.value = "1";
-    }
-  }
-}
-
-function submitRsvp(event) {
-  event.preventDefault();
-  if (!rsvpForm) return;
-
-  const formData = new FormData(rsvpForm);
-  const attending = String(formData.get("attending") || "참석");
-  const countValue = Number(formData.get("guestCount") || 0);
-  const guestCount = attending === "참석" ? Math.max(countValue, 1) : 0;
-
-  const entry = {
-    id:
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    invitationId: getInvitationId(),
-    eventTitle: getFormData().eventTitle || "초대장",
-    guestName: String(formData.get("guestName") || "").trim(),
-    guestPhone: String(formData.get("guestPhone") || "").trim(),
-    attending,
-    guestCount,
-    note: String(formData.get("note") || "").trim(),
-    createdAt: new Date().toISOString(),
-  };
-
-  if (!entry.guestName) {
-    rsvpStatusEl.textContent = "이름을 입력해 주세요.";
-    return;
-  }
-
-  const entries = getRsvpEntries();
-  entries.unshift(entry);
-  setRsvpEntries(entries);
-
-  rsvpForm.reset();
-  rsvpAttendEl.value = "참석";
-  rsvpGuestCountEl.value = "1";
-  syncRsvpCountState();
-
-  rsvpStatusEl.textContent = `✅ ${entry.guestName}님 RSVP가 저장되었습니다. 감사합니다!`;
-}
-
 document.getElementById("backgroundImage").addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) {
     uploadedImageData = "";
     updatePreview();
+    saveDraft();
     return;
   }
 
@@ -382,22 +350,24 @@ document.getElementById("backgroundImage").addEventListener("change", (event) =>
   reader.onload = () => {
     uploadedImageData = String(reader.result || "");
     updatePreview();
+    saveDraft();
   };
   reader.readAsDataURL(file);
 });
 
 form.addEventListener("input", () => {
   updatePreview();
+  saveDraft();
 });
 
 document.getElementById("generateLinkBtn").addEventListener("click", async () => {
   lastShareUrl = generateShareUrl();
-  shareUrlEl.innerHTML = `공유 링크: <a href="${lastShareUrl}" target="_blank" rel="noopener noreferrer">${lastShareUrl}</a>`;
+  shareUrlEl.innerHTML = `수신자용 링크: <a href="${lastShareUrl}" target="_blank" rel="noopener noreferrer">${lastShareUrl}</a>`;
   updatePreview();
 
   const copied = await copyText(lastShareUrl);
   if (copied) {
-    alert("공유 링크를 복사했습니다.");
+    alert("수신자용 초대장 링크를 복사했습니다.");
   }
 });
 
@@ -409,14 +379,21 @@ document.getElementById("copyTextBtn").addEventListener("click", async () => {
 
 document.getElementById("kakaoShareBtn").addEventListener("click", shareToKakao);
 
-if (rsvpForm) {
-  rsvpForm.addEventListener("submit", submitRsvp);
+document.getElementById("draftResetBtn").addEventListener("click", () => {
+  const ok = confirm("작성 중인 초안을 초기화할까요?\n(저장된 자동 초안도 함께 삭제됩니다)");
+  if (!ok) return;
+
+  form.reset();
+  uploadedImageData = "";
+  lastShareUrl = "";
+  shareUrlEl.textContent = "";
+  clearDraft();
+  updatePreview();
+});
+
+const loadedFromLink = hydrateFromUrl();
+if (!loadedFromLink) {
+  restoreDraft();
 }
 
-if (rsvpAttendEl) {
-  rsvpAttendEl.addEventListener("change", syncRsvpCountState);
-}
-
-hydrateFromUrl();
-syncRsvpCountState();
 updatePreview();
