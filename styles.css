@@ -5,6 +5,7 @@
   --muted: #6b7280;
   --primary: #2563eb;
   --ring: rgba(37, 99, 235, 0.25);
+  --danger: #b91c1c;
 }
 
 * {
@@ -41,7 +42,6 @@ body {
   gap: 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
-  padding-bottom: 24px;
 }
 
 .panel {
@@ -146,10 +146,28 @@ button:hover {
   filter: brightness(0.96);
 }
 
+button.danger {
+  background: var(--danger);
+}
+
 .share-url {
   margin-top: 8px;
   color: #111827;
   word-break: break-all;
+}
+
+.admin-shortcut {
+  margin: 10px 0 0;
+  color: #4b5563;
+}
+
+.text-link {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
 }
 
 .preview-card {
@@ -226,6 +244,33 @@ button:hover {
   height: 128px;
 }
 
+.rsvp-panel {
+  width: min(1200px, 95vw);
+  margin: 16px auto 0;
+}
+
+.inline-note {
+  margin: 0 0 12px;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.rsvp-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rsvp-form button {
+  width: fit-content;
+}
+
+.rsvp-status {
+  margin: 10px 0 0;
+  color: #065f46;
+  font-weight: 600;
+}
+
 /* 템플릿 5종 */
 .template-classic {
   background-image: linear-gradient(140deg, #fff5f7, #fdf2f8);
@@ -272,7 +317,16 @@ button:hover {
 }
 
 @media (max-width: 640px) {
-  .grid {
+  .grid,
+  .rsvp-form {
     grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
   }
 }

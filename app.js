@@ -1,9 +1,17 @@
+const RSVP_STORAGE_KEY = "opus_rsvp_entries_v1";
+
 const form = document.getElementById("invitationForm");
 const previewCard = document.getElementById("previewCard");
 const shareUrlEl = document.getElementById("shareUrl");
 const qrWrap = document.getElementById("qrWrap");
 const qrCodeEl = document.getElementById("qrCode");
 const mapLinksEl = document.getElementById("mapLinks");
+const adminPageLinkEl = document.getElementById("adminPageLink");
+
+const rsvpForm = document.getElementById("rsvpForm");
+const rsvpStatusEl = document.getElementById("rsvpStatus");
+const rsvpAttendEl = document.getElementById("rsvpAttend");
+const rsvpGuestCountEl = document.getElementById("rsvpGuestCount");
 
 const TEMPLATE_CLASS = {
   classic: "template-classic",
@@ -27,6 +35,15 @@ function fromBase64Url(str) {
   const normalized = str.replace(/-/g, "+").replace(/_/g, "/");
   const pad = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
   return decodeURIComponent(escape(atob(normalized + pad)));
+}
+
+function hashString(value) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16);
 }
 
 function formatDate(value) {
@@ -61,6 +78,27 @@ function getFormData() {
     showAccount: document.getElementById("showAccount").checked,
     backgroundImage: uploadedImageData,
   };
+}
+
+function getActiveDataParam() {
+  const queryData = new URLSearchParams(location.search).get("data");
+  if (queryData) return queryData;
+
+  if (lastShareUrl) {
+    try {
+      const url = new URL(lastShareUrl);
+      const fromShare = url.searchParams.get("data");
+      if (fromShare) return fromShare;
+    } catch {
+      // no-op
+    }
+  }
+
+  return toBase64Url(JSON.stringify(getFormData()));
+}
+
+function getInvitationId() {
+  return `inv-${hashString(getActiveDataParam())}`;
 }
 
 function applyTemplate(templateKey) {
@@ -98,26 +136,33 @@ function renderQr(text) {
   });
 }
 
+function updateAdminLink() {
+  if (!adminPageLinkEl) return;
+
+  const data = getFormData();
+  const params = new URLSearchParams({
+    invite: getInvitationId(),
+    title: data.eventTitle || "초대장",
+  });
+
+  adminPageLinkEl.href = `admin.html?${params.toString()}`;
+}
+
 function updatePreview() {
   const data = getFormData();
 
   applyTemplate(data.template);
 
-  previewCard.style.backgroundImage = data.backgroundImage
-    ? `url(${data.backgroundImage})`
-    : "";
+  previewCard.style.backgroundImage = data.backgroundImage ? `url(${data.backgroundImage})` : "";
 
   document.getElementById("previewType").textContent = data.eventType || "행사";
   document.getElementById("previewTitle").textContent = data.eventTitle || "초대장 제목을 입력해 주세요";
-  document.getElementById("previewHost").textContent = data.hostName
-    ? `초대자: ${data.hostName}`
-    : "초대자 정보";
+  document.getElementById("previewHost").textContent = data.hostName ? `초대자: ${data.hostName}` : "초대자 정보";
   document.getElementById("previewDate").textContent = `일시: ${formatDate(data.eventDate)}`;
   document.getElementById("previewVenue").textContent = `장소: ${data.venueName || "장소 미정"}`;
   document.getElementById("previewAddress").textContent = `주소: ${data.address || "주소 미입력"}`;
   document.getElementById("previewPhone").textContent = `연락처: ${data.phone || "연락처 미입력"}`;
-  document.getElementById("previewMessage").textContent =
-    data.message || "소중한 날, 함께해 주세요.";
+  document.getElementById("previewMessage").textContent = data.message || "소중한 날, 함께해 주세요.";
   document.getElementById("previewCharacter").textContent = data.character || "";
 
   const accountEl = document.getElementById("previewAccount");
@@ -130,6 +175,8 @@ function updatePreview() {
     const qrTarget = lastShareUrl || `${location.origin}${location.pathname}`;
     renderQr(qrTarget);
   }
+
+  updateAdminLink();
 }
 
 function hydrateFromUrl() {
@@ -250,6 +297,79 @@ async function shareToKakao() {
   }
 }
 
+function getRsvpEntries() {
+  try {
+    const raw = localStorage.getItem(RSVP_STORAGE_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+function setRsvpEntries(entries) {
+  localStorage.setItem(RSVP_STORAGE_KEY, JSON.stringify(entries));
+}
+
+function syncRsvpCountState() {
+  if (!rsvpAttendEl || !rsvpGuestCountEl) return;
+
+  const attending = rsvpAttendEl.value;
+  if (attending === "불참") {
+    rsvpGuestCountEl.value = "0";
+    rsvpGuestCountEl.disabled = true;
+  } else {
+    rsvpGuestCountEl.disabled = false;
+    if (Number(rsvpGuestCountEl.value) <= 0) {
+      rsvpGuestCountEl.value = "1";
+    }
+  }
+}
+
+function submitRsvp(event) {
+  event.preventDefault();
+  if (!rsvpForm) return;
+
+  const formData = new FormData(rsvpForm);
+  const attending = String(formData.get("attending") || "참석");
+  const countValue = Number(formData.get("guestCount") || 0);
+  const guestCount = attending === "참석" ? Math.max(countValue, 1) : 0;
+
+  const entry = {
+    id:
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    invitationId: getInvitationId(),
+    eventTitle: getFormData().eventTitle || "초대장",
+    guestName: String(formData.get("guestName") || "").trim(),
+    guestPhone: String(formData.get("guestPhone") || "").trim(),
+    attending,
+    guestCount,
+    note: String(formData.get("note") || "").trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!entry.guestName) {
+    rsvpStatusEl.textContent = "이름을 입력해 주세요.";
+    return;
+  }
+
+  const entries = getRsvpEntries();
+  entries.unshift(entry);
+  setRsvpEntries(entries);
+
+  rsvpForm.reset();
+  rsvpAttendEl.value = "참석";
+  rsvpGuestCountEl.value = "1";
+  syncRsvpCountState();
+
+  rsvpStatusEl.textContent = `✅ ${entry.guestName}님 RSVP가 저장되었습니다. 감사합니다!`;
+}
+
 document.getElementById("backgroundImage").addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) {
@@ -272,7 +392,7 @@ form.addEventListener("input", () => {
 
 document.getElementById("generateLinkBtn").addEventListener("click", async () => {
   lastShareUrl = generateShareUrl();
-  shareUrlEl.textContent = `공유 링크: ${lastShareUrl}`;
+  shareUrlEl.innerHTML = `공유 링크: <a href="${lastShareUrl}" target="_blank" rel="noopener noreferrer">${lastShareUrl}</a>`;
   updatePreview();
 
   const copied = await copyText(lastShareUrl);
@@ -289,5 +409,14 @@ document.getElementById("copyTextBtn").addEventListener("click", async () => {
 
 document.getElementById("kakaoShareBtn").addEventListener("click", shareToKakao);
 
+if (rsvpForm) {
+  rsvpForm.addEventListener("submit", submitRsvp);
+}
+
+if (rsvpAttendEl) {
+  rsvpAttendEl.addEventListener("change", syncRsvpCountState);
+}
+
 hydrateFromUrl();
+syncRsvpCountState();
 updatePreview();

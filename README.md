@@ -18,6 +18,22 @@ Genspark 대화 요구사항을 바탕으로 만든 초대장 플랫폼 MVP입�
 - 카카오톡 공유 버튼
   - 카카오 JS 키 설정 시 카카오 SDK 공유
   - 키 미설정 시 공유 문구 복사로 대체
+- RSVP(참석 여부) 입력 폼
+- RSVP 관리자 페이지(`admin.html`)
+  - 참석/불참/예상 인원 통계
+  - 검색/필터
+  - CSV 다운로드
+  - 항목 삭제
+
+## RSVP 데이터 저장 방식 (중요)
+
+현재 MVP는 **브라우저 LocalStorage 저장** 방식입니다.
+
+- 장점: 별도 서버 없이 바로 동작
+- 한계: 같은 브라우저/기기에서 입력된 RSVP만 보임
+
+실서비스처럼 모든 하객 응답을 한곳에 모으려면 다음 단계에서 DB 백엔드 연동이 필요합니다.
+예: Supabase, Firebase, Appwrite
 
 ## 실행 방법
 
@@ -30,7 +46,7 @@ cd chodaejang-platform-opus
 # 방법 1) 파일 직접 열기
 open index.html
 
-# 방법 2) 간단한 로컬 서버 실행
+# 방법 2) 로컬 서버 실행(권장)
 python3 -m http.server 8080
 # http://localhost:8080 접속
 ```
@@ -51,14 +67,16 @@ chodaejang-platform-opus/
 ├── index.html
 ├── styles.css
 ├── app.js
+├── admin.html
+├── admin.css
+├── admin.js
 └── README.md
 ```
 
 ## 다음 확장 아이디어
 
+- DB 백엔드 연동으로 RSVP 중앙 수집
 - 템플릿별 고급 레이아웃 편집기
-- 초대장 저장/불러오기 (서버 + DB)
 - 링크 단축 및 방문 통계
-- 참석 여부(RSVP) 수집
 - 계좌/송금 UX 고도화
 - 카카오 로그인 연동
